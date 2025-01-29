@@ -1,0 +1,30 @@
+{% extends "master.html" %}
+{% block title %}View Slots{% endblock %}
+{% block content %}
+<body>
+    <div class="w-full h-screen flex flex-col items-center p-5">
+        <div class="w-full relative overflow-x-auto sm:rounded-lg p-7">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500">
+                <thead class="text-xs text-white uppercase bg-gray-700">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Slot Number</th>
+                        <th scope="col" class="px-6 py-3">Availability</th>
+                        <th scope="col" class="px-6 py-3">Car Parked</th>
+                        <th scope="col" class="px-6 py-3">Duration</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 flex justify-center space-x-2 absolute bottom-2">
+            <button id="prev-btn" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 rounded hover:bg-gray-300">Previous</button>
+            <span id="page-info" class="px-3 py-2 text-sm font-medium text-gray-700">Page 1</span>
+            <button id="next-btn" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 rounded hover:bg-gray-300">Next</button>
+        </div>
+    </div>
+
+    <!-- <script src="/static/js/view.js"></script> -->
+{% endblock %}
