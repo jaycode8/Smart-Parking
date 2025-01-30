@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.template import loader
 from datetime import datetime
 from django.contrib.auth import authenticate, login, logout
@@ -18,6 +18,11 @@ from .utils.admin import createAdmin
 # Create your views here.
 
 createAdmin()
+
+@api_view(["GET"])
+def logOut(req):
+    logout(req)
+    return redirect("/")
 
 @api_view(["GET", "POST"])
 def signin(req):
@@ -49,6 +54,7 @@ def signin(req):
         return Response({"message": "Successfully loged into your account", "user":serializer.data, "success": True, "token": token.key, "status": status.HTTP_200_OK})
 
 @api_view(["GET", "POST"])
+@login_required
 def parking(req):
     if req.method == "GET":
         template = loader.get_template("parking.html")
@@ -67,6 +73,7 @@ def parking(req):
 
 @csrf_exempt
 @api_view(["PUT", "DELETE", "GET"])
+@login_required
 def user(req, userId):
     obj = Users.objects.get(id=userId)
     if req.method == "DELETE":
@@ -90,6 +97,7 @@ def user(req, userId):
 
 
 @api_view(["GET", "POST"])
+@login_required
 def users(req):
     template = loader.get_template("users.html")
     context = {}
@@ -107,6 +115,7 @@ def users(req):
         return JsonResponse({"message":"An error has occured", "success":False})
 
 @api_view(["GET", "POST"])
+@login_required
 def slots(req):
     if req.method == "GET":
         context = {}
