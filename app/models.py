@@ -42,7 +42,7 @@ class Users(AbstractBaseUser):
     password = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_staff = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
@@ -61,3 +61,18 @@ class Users(AbstractBaseUser):
     def has_perm(self, perm, obj=None):
         return True
 
+
+class Slots(models.Model):
+    id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
+    slotId = models.CharField(max_length=50, unique=True)
+    floor = models.CharField(max_length=50)
+    isAvailable = models.BooleanField(default=True)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+
+class Parking(models.Model):
+    id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
+    slot = models.ForeignKey(Slots, on_delete=models.CASCADE)
+    vehicle = models.CharField(max_length=10)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)

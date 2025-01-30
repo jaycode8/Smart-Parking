@@ -1,15 +1,16 @@
 {% extends "master.html" %}
+{% load static %}
 {% block title %}Sign In{% endblock %}
 {% block content %}
 <body>
     <div class="bg-gray-50">
-        <div class="{{class}} absolute top-4 right-4">
-            <div id="alert-3" class="flex items-center py-2 px-4 mb-4 bg-red-800 rounded-lg text-white" role="alert">
+        <div class="absolute top-4 right-4">
+            <div id="alert-message" class="hidden items-center py-2 px-4 mb-4 rounded-lg text-white" role="alert">
                 <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                 </svg>
 
-                <div class="ms-3 text-sm font-medium">{{message}}</div>
+                <span class="ms-3 text-sm font-medium" id="message-span"></span>
                
             </div>
         </div>
@@ -21,7 +22,7 @@
             <div class="w-11/12 sm:w-3/4 lg:w-1/2 rounded-lg md:mt-0 sm:max-w-md xl:p-0 mx-auto">
                 <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
                     <h1 class="text-xl font-bold leading-tight tracking-tight text-primary md:text-2xl ">Login</h1>
-                    <form class="space-y-4 md:space-y-6" action="/signin" method="post">
+                    <form class="space-y-4 md:space-y-6">
                         <div class="relative z-0 w-full mb-5 group">
                             <input type="text" name="username" id="username" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-primary appearance-none dark:text-white-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-primary peer" placeholder=" " required value="{{username}}"/>
                             <label for="username" class="peer-focus:font-medium absolute text-sm text-gray-900 duration-300 transform -translate-y-6 scale-90 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-black peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-90 peer-focus:-translate-y-6" onChange={handleChange}>Username</label>
@@ -38,5 +39,6 @@
             </div>
         </div>
     </div>
+    <script src="{% static '/js/signin.js' %}"></script>
 
 {% endblock %}

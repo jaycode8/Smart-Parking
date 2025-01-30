@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import Users
+from .models import Users, Slots, Parking
 from django.contrib.auth.hashers import make_password
 
 class UsersSerializers(ModelSerializer):
@@ -15,3 +15,19 @@ class UsersSerializers(ModelSerializer):
         instance.is_active = True
         instance.save()
         return instance
+
+class SlotsSerializers(ModelSerializer):
+    class Meta(object):
+        model = Slots
+        fields = "__all__"
+
+class ParkingSerializers(ModelSerializer):
+    class Meta(object):
+        model = Parking
+        fields = "__all__"
+        depth = 1
+
+class NewParkingSerializers(ModelSerializer):
+    class Meta(object):
+        model = Parking
+        fields = "__all__"

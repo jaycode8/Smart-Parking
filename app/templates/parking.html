@@ -51,7 +51,7 @@
             </div>
         </div>
     </div>
-    <h1 class="uppercase font-bold text-2xl">Available Parking Slots</h1>
+    <h1 class="uppercase font-bold text-2xl">Parking Slots Allocation</h1>
     <button id="new-slot"
         class="absolute right-5 py-1 px-8 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">New
         Slot</button>
@@ -59,23 +59,19 @@
         <table class="w-full text-sm text-left rtl:text-right text-gray-500">
             <thead class="text-xs text-white uppercase bg-gray-700">
                 <tr>
-                    <th scope="col" class="px-6 py-3">Slot Id</th>
+                    <th scope="col" class="px-6 py-3">Slot Number</th>
                     <th scope="col" class="px-6 py-3">Floor</th>
-                    <th scope="col" class="px-6 py-3">Availability</th>
-                    <th scope="col" class="px-6 py-3">Added On</th>
+                    <th scope="col" class="px-6 py-3">Car Parked</th>
+                    <th scope="col" class="px-6 py-3">Entry Time</th>
                 </tr>
             </thead>
             <tbody id="table-body">
-                {% for slot in slots %}
+                {% for data in parking %}
                 <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{slot.slotId}}</th>
-                    <td class="px-6 py-4">{{slot.floor}}</td>
-                    {% if slot.isAvailable %}
-                        <td class="px-6 py-4">Available</td>
-                    {% else %}
-                        <td class="px-6 py-4">Occupied</td>
-                    {% endif %}
-                    <td class="px-6 py-4">{{slot.createdAt}}</td>
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{data.slot.slotId}}</th>
+                    <td class="px-6 py-4">{{data.slot.floor}}</td>
+                    <td class="px-6 py-4">{{data.vehicle}}</td>
+                    <td class="px-6 py-4">{{data.createdAt}}</td>
                 </tr>
                 {% endfor %}
             </tbody>

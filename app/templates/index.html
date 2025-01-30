@@ -21,22 +21,24 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form class="p-4 md:p-5">
+                <form class="p-4 md:p-5" method="POST" action="/parking">
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="plates" class="block mb-2 text-sm font-medium text-gray-900">Number
+                            <label for="vehicle" class="block mb-2 text-sm font-medium text-gray-900">Number
                                 Plates</label>
-                            <input type="text" name="plates" id="plates"
+                            <input type="text" name="vehicle" id="vehicle"
                                 class="border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none"
-                                placeholder="" required="">
+                                placeholder="eg. KCA 123A" required="">
                         </div>
                         <div class="col-span-2 sm:col-span-1">
                             <label for="slot" class="block mb-2 text-sm font-medium text-gray-900">Parking
                                 Slot</label>
-                            <select id="slot"
+                            <select id="slot" name="slot"
                                 class="border border-gray-300 text-gray-900 bg-white text-sm rounded-lg block w-full p-2.5 focus:outline-none">
                                 <option selected="">Select Parking Slot</option>
-                                <option value="fs12">fs12</option>
+                                {% for slot in slots %}
+                                    <option value="{{slot.id}}">{{slot.slotId}}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </div>
@@ -65,9 +67,19 @@
                 class="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">
                 Manual Assign
             </button>
-            <a href="/slots"
+            {% if isAdmin %}
+                <a href="/users"
+                    class="text-center text-white bg-blue-700 font-medium text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none">
+                    Manage Users
+                </a>
+                <a href="/slots"
+                    class="text-center text-white bg-blue-700 font-medium text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none">
+                    Manage Slots
+                </a>
+            {% endif %}
+            <a href="/parking"
                 class="text-center text-white bg-blue-700 font-medium text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none">
-                View Slots
+                View Parking
             </a>
 
         </div>
