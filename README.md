@@ -9,8 +9,10 @@ This document provides a step-by-step guide to set up the Smart Parking Django p
 
 ## Steps to Set Up the Project
 ### 1. Clone the Repository
-Open your command prompt and execute the following commands:  
+Open your command prompt and execute the following commands:
+```  
 git clone git@github.com:jaycode8/Smart-Parking.git
+```
 cd Smart-Parking
 
 ### 2. Create a Python Virtual Environment
