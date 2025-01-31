@@ -2,9 +2,8 @@
 {% load static %}
 {% block title %}System Users{% endblock %}
 {% block content %}
-{% csrf_token %}
+
 <div class="relative w-full h-screen flex flex-col items-center p-5">
-    <input type="hidden" name="csrfmiddlewaretoken" value="your-csrf-token-value">
     <div id="user-modal" tabindex="-1" aria-hidden="true"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full max-h-full bg-[rgba(0,0,0,0.5)]">
         <div class="relative p-4 w-1/2 max-h-full">
@@ -24,7 +23,8 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form class="p-4 md:p-5" method="post" action="/users">
+                <form class="p-4 md:p-5" >
+                    {% csrf_token %}
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2 sm:col-span-1">
                             <label for="firstName" class="block mb-2 text-sm font-medium text-gray-900">First
@@ -110,23 +110,27 @@
             </thead>
             <tbody id="table-body">
                 {% for user in users %}
-                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer group" data-user-id="{{ user.id }}" onclick="editUser('{{ user.id }}')">
+                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer group" data-user-id="{{ user.id }}"
+                    onclick="editUser('{{ user.id }}')">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                        {{user.lastName}}  {{user.firstName}}</th>
+                        {{user.lastName}} {{user.firstName}}</th>
                     <td class="px-6 py-4">{{user.idNo}}</td>
                     <td class="px-6 py-4">{{user.username}}</td>
                     <td class="px-6 py-4">{{user.phone}}</td>
                     <td class="px-6 py-4">{{user.email}}</td>
                     {% if user.is_superuser %}
-                        <td class="px-6 py-4">System Admin</td>
+                    <td class="px-6 py-4">System Admin</td>
                     {% else %}
-                        <td class="px-6 py-4">System Operator</td>
+                    <td class="px-6 py-4">System Operator</td>
                     {% endif %}
                     <td class="px-6 py-4 flex relative">
                         {{user.gender}}
                         <span class="cancel-icon hidden group-hover:inline-block absolute right-1">
-                            <svg onclick="deleteUser('{{ user.id }}')" class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            <svg onclick="deleteUser('{{ user.id }}')"
+                                class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </span>
                     </td>

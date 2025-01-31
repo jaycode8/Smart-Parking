@@ -17,41 +17,42 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.classList.remove('flex');
     });
 
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
+    // form.addEventListener('submit', function (event) {
+    //     event.preventDefault();
 
-        const formData = {
-            firstName: document.getElementById('firstName').value,
-            lastName: document.getElementById('lastName').value,
-            username: document.getElementById('username').value,
-            idNo: document.getElementById('idNo').value,
-            phone: document.getElementById('phone').value,
-            email: document.getElementById('email').value,
-            gender: document.getElementById('gender').value,
-            password: document.getElementById('password').value,
-        };
-        messageSpan.textContent = '';
+    //     const formData = {
+    //         firstName: document.getElementById('firstName').value,
+    //         lastName: document.getElementById('lastName').value,
+    //         username: document.getElementById('username').value,
+    //         idNo: document.getElementById('idNo').value,
+    //         phone: document.getElementById('phone').value,
+    //         email: document.getElementById('email').value,
+    //         gender: document.getElementById('gender').value,
+    //         password: document.getElementById('password').value,
+    //     };
+    //     messageSpan.textContent = '';
 
-        axios.post('/users', formData)
-            .then(response => {
-                messageSpan.textContent = response.data.message;
-                if(response.data.success){
-                    messageSpan.classList.add('bg-green-500');
-                    setTimeout(() => {
-                        modal.classList.add('hidden');
-                        modal.classList.remove('flex');
-                        window.location.reload();
-                    }, 1500);
-                    return
-                }
-                messageSpan.classList.add('bg-red-500');
-            })
-            .catch(error => {
-                console.error('Error creating user:', error.response.data);
-                messageSpan.textContent = 'Error creating user. Please try again.';
-                messageSpan.classList.add('bg-red-500');
-            });
-    });
+    //     axios.post('/users', formData)
+    //         .then(response => {
+    //             messageSpan.textContent = response.data.message;
+    //             if(response.data.success){
+    //                 messageSpan.classList.add('bg-green-500');
+    //                 setTimeout(() => {
+    //                     modal.classList.add('hidden');
+    //                     modal.classList.remove('flex');
+    //                     window.location.reload();
+    //                 }, 1500);
+    //                 return
+    //             }
+    //             messageSpan.classList.add('bg-red-500');
+    //         })
+    //         .catch(error => {
+    //             console.error('Error creating user:', error.response.data);
+    //             messageSpan.textContent = 'Error creating user. Please try again.';
+    //             messageSpan.classList.add('bg-red-500');
+    //         });
+    // });
+    
 });
 
 const deleteUser = (userId) =>{

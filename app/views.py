@@ -40,7 +40,6 @@ def signin(req):
         if not usr.is_active:
             return Response({"message": "Account does not exist", "success": False, "status": status.HTTP_400_BAD_REQUEST})
         found_user = authenticate(username=user['username'], password=user['password'])
-        print(usr.password)
         if not found_user:
             return Response({"message": "The password is incorect", "success": False, "status": status.HTTP_400_BAD_REQUEST})
 
@@ -52,6 +51,14 @@ def signin(req):
         req.session.set_expiry(3600)
         serializer = UsersSerializers(instance=usr)
         return Response({"message": "Successfully loged into your account", "user":serializer.data, "success": True, "token": token.key, "status": status.HTTP_200_OK})
+
+def updateParkingSlot(id):
+    slot = Slots.objects.get(id=id)
+    if slot.isAvailable:
+        slot.isAvailable = False
+    else:
+        slot.isAvailable = True
+    slot.save()
 
 @api_view(["GET", "POST"])
 @login_required
@@ -68,8 +75,9 @@ def parking(req):
         serializer = NewParkingSerializers(data=req.data)
         if serializer.is_valid():
             serializer.save()
-            return HttpResponse({"message":"successfully added a new system user", "success":True})
-        return HttpResponse({"message":"An error occured", "success":False})
+            updateParkingSlot(req.data["slot"])
+            return redirect("/")
+        return JsonResponse({"message":"An error occured", "success":False})
 
 @csrf_exempt
 @api_view(["PUT", "DELETE", "GET"])
@@ -94,8 +102,7 @@ def user(req, userId):
             return JsonResponse({"message":"Successfully updated user data", "success":True})
         return JsonResponse({"message":"An error has occured try again later!!!", "success":False})
 
-
-
+@csrf_exempt
 @api_view(["GET", "POST"])
 @login_required
 def users(req):
@@ -111,8 +118,33 @@ def users(req):
         serializer = UsersSerializers(data=req.data)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse({"message":"successfully added a new system user", "success":True})
+            # return JsonResponse({"message":"successfully added a new system user", "success":True})
+            return redirect("/users")
         return JsonResponse({"message":"An error has occured", "success":False})
+
+@csrf_exempt
+@api_view(["PUT", "DELETE", "GET"])
+@login_required
+def slot(req, id):
+    obj = Slots.objects.get(id=id)
+    if req.method == "DELETE":
+        try:
+            obj.delete()
+        except Exception as e:
+            return JsonResponse({"message": str(e), "success":False})
+        return JsonResponse({"message":"Successfully deleted Parking Slot", "success":True})
+
+    elif req.method == "GET":
+        serializer = SlotsSerializers(instance=obj)            
+        return JsonResponse({"data":serializer.data, "success":True})
+
+    elif req.method == "PUT":
+        serializer = SlotsSerializers(obj, data=req.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            print("helo")
+            return JsonResponse({"message":"Successfully updated slot's data", "success":True})
+        return JsonResponse({"message":"An error has occured try again later!!!", "success":False})
 
 @api_view(["GET", "POST"])
 @login_required

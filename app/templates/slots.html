@@ -8,7 +8,7 @@
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full max-h-full bg-[rgba(0,0,0,0.5)]">
         <div class="relative p-4 w-1/2 max-h-full">
             <div class="relative bg-white w-full rounded-lg shadow">
-                <span class="absolute -top-10 right-0 {{color}} px-3 py-1">{{message}}</span>
+                <span class="absolute -top-10 right-0 px-3 py-1" id="message-span"></span>
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-lg font-semibold text-gray-900">
                         Add a Parking Slot
@@ -23,7 +23,9 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form class="p-4 md:p-5" method="post" action="/slots">
+                <form class="p-4 md:p-5">
+                    {% csrf_token %}
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2 sm:col-span-1">
                             <label for="slotId" class="block mb-2 text-sm font-medium text-gray-900">Slot Id</label>
@@ -40,7 +42,7 @@
                                 <option value="First Floor">First Floor</option>
                             </select>
                         </div>
-                        </div>
+                    </div>
                     <div class="grid justify-end">
                         <button type="submit"
                             class="text-white inline-flex items-center bg-blue-700 font-medium text-sm px-5 py-2 text-center">
@@ -67,15 +69,26 @@
             </thead>
             <tbody id="table-body">
                 {% for slot in slots %}
-                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
+                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer group"
+                    onclick="editSlot('{{ slot.id }}')">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{slot.slotId}}</th>
                     <td class="px-6 py-4">{{slot.floor}}</td>
                     {% if slot.isAvailable %}
-                        <td class="px-6 py-4">Available</td>
+                    <td class="px-6 py-4">Available</td>
                     {% else %}
-                        <td class="px-6 py-4">Occupied</td>
+                    <td class="px-6 py-4">Occupied</td>
                     {% endif %}
-                    <td class="px-6 py-4">{{slot.createdAt}}</td>
+                    <td class="px-6 py-4 relative">
+                        {{slot.createdAt}}
+                        <span class="cancel-icon hidden group-hover:inline-block absolute right-1">
+                            <svg onclick="deleteUser('{{ slot.id }}')"
+                                class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </span>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
