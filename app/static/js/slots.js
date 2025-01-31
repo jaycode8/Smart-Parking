@@ -92,3 +92,20 @@ const editSlot = async (id) => {
         console.log(error)
     }
 }
+
+const deleteSlot = (slot) =>{
+    if (confirm('Are you sure you want to delete this slot?')) {
+        axios.delete(`/slot/${slot}`)
+            .then(response => {
+                console.log('Slot deleted successfully:', response.data);
+                const row = document.querySelector(`tr[data-slot-id="${slot}"]`);
+                if (row) {
+                    row.remove();
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting slot:', error.response.data);
+                alert('Error deleting slot. Please try again.');
+            });
+    }
+}

@@ -69,7 +69,7 @@
             </thead>
             <tbody id="table-body">
                 {% for slot in slots %}
-                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer group"
+                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer group" data-slot-id="{{ slot.id }}"
                     onclick="editSlot('{{ slot.id }}')">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{slot.slotId}}</th>
                     <td class="px-6 py-4">{{slot.floor}}</td>
@@ -81,7 +81,7 @@
                     <td class="px-6 py-4 relative">
                         {{slot.createdAt}}
                         <span class="cancel-icon hidden group-hover:inline-block absolute right-1">
-                            <svg onclick="deleteUser('{{ slot.id }}')"
+                            <svg onclick="deleteSlot('{{ slot.id }}')"
                                 class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
