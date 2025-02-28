@@ -63,7 +63,37 @@
     </div>
 
     <div class="w-1/6 p-5 grid items-end relative">
-        <a href="/logout" class="absolute top-5 right-5">logout</a>
+        <!-- <a href="/logout" class="absolute top-5 right-5">logout</a> -->
+        <div class="absolute top-5 right-5 bg-red-500">
+            <button id="user-menu-button" class="absolute top-1 right-5 flex items-center space-x-2 text-gray-900 focus:outline-none">
+                <svg width="2rem" height="2rem" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <g id="Layer_2" data-name="Layer 2">
+                      <g id="invisible_box" data-name="invisible box">
+                        <rect width="48" height="48" fill="none"/>
+                      </g>
+                      <g id="icons_Q2" data-name="icons Q2">
+                        <g>
+                          <path d="M24,10a8,8,0,1,0,8,8A8,8,0,0,0,24,10Zm0,12a4,4,0,1,1,4-4A4,4,0,0,1,24,22Z"/>
+                          <path d="M24,2A22,22,0,1,0,46,24,21.9,21.9,0,0,0,24,2ZM11.8,37.2A26.4,26.4,0,0,1,24,34a26.4,26.4,0,0,1,12.2,3.2,17.9,17.9,0,0,1-24.4,0Zm27.1-3.1h0A30.7,30.7,0,0,0,24,30,30.7,30.7,0,0,0,9.1,34.1h0A17.7,17.7,0,0,1,6,24a18,18,0,0,1,36,0,17.7,17.7,0,0,1-3.1,10.1Z"/>
+                        </g>
+                      </g>
+                    </g>
+                  </svg>
+            </button>
+            
+            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200">
+                <div class="p-3">
+                    <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
+                    <p class="text-xs text-gray-600">{{ user.lastName }}  {{ user.firstName }}</p>
+                    <p class="text-xs text-gray-600">{{ user.email }}</p>
+                    <p class="text-xs text-gray-600">{{ user.phone }}</p>
+                    <p class="text-xs text-gray-600">{{ user.gender }}</p>
+                </div>
+                <div class="border-t border-gray-200">
+                    <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Logout</a>
+                </div>
+            </div>
+        </div>
         <div class="grid gap-3">
             <button type="button" id="manual-assign"
                 class="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">
@@ -89,5 +119,19 @@
 </div>
 
 <script src="{% static '/js/index.js' %}"></script>
+<script>
+    document.getElementById("user-menu-button").addEventListener("click", function () {
+        const dropdown = document.getElementById("user-dropdown");
+        dropdown.classList.toggle("hidden");
+    });
+
+    document.addEventListener("click", function (event) {
+        const dropdown = document.getElementById("user-dropdown");
+        const button = document.getElementById("user-menu-button");
+        if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.add("hidden");
+        }
+    });
+</script>
 
 {% endblock %}

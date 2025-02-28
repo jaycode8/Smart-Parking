@@ -10,4 +10,5 @@ urlpatterns = [
     path('signin', views.signin),
     path('user/<slug:userId>', views.user),
     path('logout', views.logOut),
+    path('detection', views.detect_plate)
 ]

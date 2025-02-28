@@ -3,6 +3,7 @@ const modal = document.getElementById('user-modal');
 const newUserButton = document.getElementById('new-user');
 const closeModalBtn = document.getElementById('close-modal');
 const messageSpan = document.querySelector('#user-modal span');
+const token = localStorage.getItem('smartPToken');
 
 document.addEventListener('DOMContentLoaded', function () {
     const tableBody = document.getElementById('table-body');
@@ -105,7 +106,9 @@ const editUser = async(userId) =>{
             }
 
             try {
-                const res = await axios.put(`/user/${userId}`, updatedData);
+                const res = await axios.put(`/user/${userId}`, updatedData, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
                 messageSpan.textContent = '';
                 messageSpan.textContent = res.data.message;
                 if(res.data.success){
