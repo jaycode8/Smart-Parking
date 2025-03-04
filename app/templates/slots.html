@@ -10,7 +10,7 @@
             <div class="relative bg-white w-full rounded-lg shadow">
                 <span class="absolute -top-10 right-0 px-3 py-1" id="message-span"></span>
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-lg font-semibold text-gray-900">
+                    <h3 class="text-lg font-semibold text-gray-900" id="formLabel">
                         Add a Parking Slot
                     </h3>
                     <button type="button" id="close-modal"
@@ -23,9 +23,8 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <form class="p-4 md:p-5">
-                    {% csrf_token %}
-                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <form class="p-4 md:p-5" onsubmit="handleSubmit(event)">
+                    <input type="text" class="hidden" name="id" id="id">
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2 sm:col-span-1">
                             <label for="slotId" class="block mb-2 text-sm font-medium text-gray-900">Slot Id</label>
@@ -53,6 +52,9 @@
             </div>
         </div>
     </div>
+    
+    {% include 'includes/menu.html' %}
+
     <h1 class="uppercase font-bold text-2xl">Available Parking Slots</h1>
     <button id="new-slot"
         class="absolute right-5 py-1 px-8 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">New
@@ -78,10 +80,10 @@
                     {% else %}
                     <td class="px-6 py-4">Occupied</td>
                     {% endif %}
-                    <td class="px-6 py-4 relative">
-                        {{slot.createdAt}}
+                    <td class="px-6 py-4 relative date-time" data-datetime="{{ slot.createdAt }}">
+                        <span class="formatted-date">{{ slot.createdAt }}</span>
                         <span class="cancel-icon hidden group-hover:inline-block absolute right-1">
-                            <svg onclick="deleteSlot('{{ slot.id }}')"
+                            <svg onclick="deleteSlot('{{ slot.id }}', event)"
                                 class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -96,13 +98,67 @@
     </div>
 
     <div class="mt-4 flex justify-center space-x-2 absolute bottom-2">
-        <button id="prev-btn"
+        <span id="total-pages" hidden>{{ total_pages }}</span>
+        <button id="prev-btn" onclick="fetchSlots(currentPage - 1)"
             class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 rounded hover:bg-gray-300">Previous</button>
         <span id="page-info" class="px-3 py-2 text-sm font-medium text-gray-700">Page 1</span>
-        <button id="next-btn"
+        <button id="next-btn" onclick="fetchSlots(currentPage + 1)"
             class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 rounded hover:bg-gray-300">Next</button>
     </div>
+    
 </div>
 
 <script src="{% static '/js/slots.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".date-time").forEach(el => {
+            const isoDate = el.dataset.datetime;
+            const date = new Date(isoDate);
+            const formattedTime = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }).replace(":", "") + "HR";
+            const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            const dateSpan = el.querySelector(".formatted-date");
+            if (dateSpan) {
+                dateSpan.textContent = `${formattedTime} ${formattedDate}`;
+            }
+        });
+    });
+</script>
+<script>
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const token = localStorage.getItem("smartPToken");
+        const id = document.getElementById('id').value;
+        const formData = {
+            slotId: document.getElementById('slotId').value,
+            floor: document.getElementById('floor').value,
+        };
+        const res = id != "" ?
+            await axios.put(`/slot/${id}`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            }) : await axios.post('/slots', formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+        alert(res.data.message)
+        if (res.data.success) {
+            location.reload(true);
+        }
+    }
+
+    const editSlot = async (id) => {
+        const res = await axios.get(`/slot/${id}`)
+        const slotDetails = res.data.data
+        console.log(slotDetails)
+        modal.classList.toggle('hidden');
+        modal.classList.toggle('flex');
+        document.getElementById("formLabel").innerText = "Update Slot"
+        document.getElementById('id').value = slotDetails.id
+        document.getElementById('slotId').value = slotDetails.slotId
+        let floorSelect = document.getElementById('floor');
+        floorSelect.value = slotDetails.floor;
+    }
+</script>
 {% endblock %}

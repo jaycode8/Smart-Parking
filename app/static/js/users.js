@@ -5,58 +5,20 @@ const closeModalBtn = document.getElementById('close-modal');
 const messageSpan = document.querySelector('#user-modal span');
 const token = localStorage.getItem('smartPToken');
 
-document.addEventListener('DOMContentLoaded', function () {
-    const tableBody = document.getElementById('table-body');
+const tableBody = document.getElementById('table-body');
 
-    newUserButton.addEventListener('click', () => {
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
-    });
-
-    closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    });
-
-    // form.addEventListener('submit', function (event) {
-    //     event.preventDefault();
-
-    //     const formData = {
-    //         firstName: document.getElementById('firstName').value,
-    //         lastName: document.getElementById('lastName').value,
-    //         username: document.getElementById('username').value,
-    //         idNo: document.getElementById('idNo').value,
-    //         phone: document.getElementById('phone').value,
-    //         email: document.getElementById('email').value,
-    //         gender: document.getElementById('gender').value,
-    //         password: document.getElementById('password').value,
-    //     };
-    //     messageSpan.textContent = '';
-
-    //     axios.post('/users', formData)
-    //         .then(response => {
-    //             messageSpan.textContent = response.data.message;
-    //             if(response.data.success){
-    //                 messageSpan.classList.add('bg-green-500');
-    //                 setTimeout(() => {
-    //                     modal.classList.add('hidden');
-    //                     modal.classList.remove('flex');
-    //                     window.location.reload();
-    //                 }, 1500);
-    //                 return
-    //             }
-    //             messageSpan.classList.add('bg-red-500');
-    //         })
-    //         .catch(error => {
-    //             console.error('Error creating user:', error.response.data);
-    //             messageSpan.textContent = 'Error creating user. Please try again.';
-    //             messageSpan.classList.add('bg-red-500');
-    //         });
-    // });
-    
+newUserButton.addEventListener('click', () => {
+    modal.classList.toggle('hidden');
+    modal.classList.toggle('flex');
 });
 
-const deleteUser = (userId) =>{
+closeModalBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+});
+
+const deleteUser = (userId, event) => {
+    event.stopPropagation();
     if (confirm('Are you sure you want to delete this user?')) {
         axios.delete(`/user/${userId}`)
             .then(response => {
@@ -73,60 +35,25 @@ const deleteUser = (userId) =>{
     }
 }
 
-const editUser = async(userId) =>{
-    try{
-        const res = await axios.get(`/user/${userId}`)
-        const userDetails = res.data.data
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
-        document.getElementById('firstName').value = userDetails.firstName
-        document.getElementById('lastName').value = userDetails.lastName
-        document.getElementById('username').value = userDetails.username
-        document.getElementById('idNo').value = userDetails.idNo
-        document.getElementById('phone').value = userDetails.phone
-        document.getElementById('email').value = userDetails.email
-        let genderSelect = document.getElementById('gender');
-        genderSelect.value = userDetails.gender;
+let currentPage = 1;
+let totalPages = 1;
 
-        form.onsubmit = async (e) => {
-            e.preventDefault();
+const fetchUsers = (page) => {
+    if (page < 1 || page > totalPages) return;
 
-            const updatedData = {
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                username: document.getElementById('username').value,
-                idNo: document.getElementById('idNo').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                gender: document.getElementById('gender').value,
-            };
-            const password = document.getElementById('password').value
-            if(password){
-                updatedData["password"] = password
-            }
+    fetch(`/users?page=${page}`)
+        .then(response => response.text())
+        .then(html => {
+            document.querySelector("#table-body").innerHTML = 
+                new DOMParser().parseFromString(html, "text/html").querySelector("#table-body").innerHTML;
 
-            try {
-                const res = await axios.put(`/user/${userId}`, updatedData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                messageSpan.textContent = '';
-                messageSpan.textContent = res.data.message;
-                if(res.data.success){
-                    messageSpan.classList.add('bg-green-500');
-                    setTimeout(() => {
-                        modal.classList.add('hidden');
-                        modal.classList.remove('flex');
-                        window.location.reload();
-                    }, 1500);
-                    return
-                }
-                messageSpan.classList.add('bg-red-500');
-            } catch (error) {
-                messageSpan.classList.add('bg-red-500');
-                messageSpan.textContent = 'Error updating user. Please try again.'
-            }
-        };
-    }catch(error){
-        console.log(error)
-    }
-}
+            currentPage = page;
+            totalPages = parseInt(document.querySelector("#total-pages").textContent) || 1;
+            document.querySelector("#page-info").textContent = `Page ${currentPage} of ${totalPages}`;
+        })
+        .catch(error => console.error("Error fetching users:", error));
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchUsers(currentPage);
+});

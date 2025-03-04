@@ -1,5 +1,6 @@
 import os
 from django.conf import settings
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.template import loader
 from datetime import datetime
@@ -81,16 +82,38 @@ def detect_plate(request):
                 filename = f"plate_{timestamp}_{i}.jpg"
                 file_path = os.path.join(PLATES_DIR, filename)
                 plate_img = cv2.resize(plate_img, (660, 220), interpolation=cv2.INTER_AREA)
-                cv2.imwrite(file_path, plate_img)
+                # cv2.imwrite(file_path, plate_img)
                 number_plates = plate_extraction(plate_img)
                 if number_plates == "":
-                    pass
+                    continue
+
                 detected_plates.append({
                     "file_path": f"{settings.MEDIA_URL}plates/{filename}",
                     "number_plates": number_plates
                 })
+            try:
+                exist_parking = Parking.objects.get(vehicle=number_plates)
+                update_parking_slot(exist_parking.slot.id)
+                exist_parking.delete()
+                return JsonResponse({"message": "Car unparked"}, status=200)
 
-            return JsonResponse({"message": "Plates detected", "plates": detected_plates}, status=200)
+            except Parking.DoesNotExist:
+                available_slot = Slots.objects.filter(isAvailable=True).first()
+
+                if not available_slot:
+                    return JsonResponse({"error": "No available parking slot slots"}, status=400)
+
+                park_data = {
+                    "slot":available_slot.id,
+                    "vehicle":number_plates
+                }
+                serializer = NewParkingSerializers(data=park_data)
+                if serializer.is_valid():
+                    serializer.save()
+                    update_parking_slot(available_slot.id)
+                    return JsonResponse({"message": f"{number_plates} assigned slot {available_slot.slotId} located at {available_slot.floor}"}, status=200)
+                    
+                return JsonResponse({"message": f"Unable to auto park {number_plates} at the moment try manuall assign"}, status=200)
 
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
@@ -114,12 +137,12 @@ def signin(req):
         try:
             usr = get_object_or_404(Users, username=user['username'])
         except:
-            return Response({"message": "Username does not exist", "success": False, "status": status.HTTP_400_BAD_REQUEST})
+            return Response({"message": "Username does not exist", "success": False}, status=404)
         if not usr.is_active:
-            return Response({"message": "Account does not exist", "success": False, "status": status.HTTP_400_BAD_REQUEST})
+            return Response({"message": "Account does not exist", "success": False}, status=404)
         found_user = authenticate(username=user['username'], password=user['password'])
         if not found_user:
-            return Response({"message": "The password is incorect", "success": False, "status": status.HTTP_400_BAD_REQUEST})
+            return Response({"message": "The password is incorect", "success": False}, status=400)
 
         token, _ = Token.objects.get_or_create(user=usr)
         token.created = datetime.now()
@@ -128,9 +151,9 @@ def signin(req):
         req.session['sessionId'] = str(found_user.id)
         req.session.set_expiry(3600)
         serializer = UsersSerializers(instance=usr)
-        return Response({"message": "Successfully loged into your account", "user":serializer.data, "success": True, "token": token.key, "status": status.HTTP_200_OK})
+        return Response({"message": "Successfully loged into your account", "user":serializer.data, "success": True, "token": token.key}, status=200)
 
-def updateParkingSlot(id):
+def update_parking_slot(id):
     slot = Slots.objects.get(id=id)
     if slot.isAvailable:
         slot.isAvailable = False
@@ -138,118 +161,142 @@ def updateParkingSlot(id):
         slot.isAvailable = True
     slot.save()
 
+@api_view(["DELETE"])
+def parked_car(req, id):
+    obj = Parking.objects.get(id=id)
+    update_parking_slot(obj.slot.id)
+    obj.delete()
+    return JsonResponse({"message": "Car unparkde"}, status=200)
+
+
 @api_view(["GET", "POST"])
-@login_required
+# @login_required
 def parking(req):
     if req.method == "GET":
         template = loader.get_template("parking.html")
-        context = {}
+        page = req.GET.get("page", 1)
         obj = Parking.objects.all()
-        serializer = ParkingSerializers(obj, many=True)
-        context["parking"] = serializer.data
-        return HttpResponse(template.render(context, req))   
+        paginator = Paginator(obj, 10)
+        paginated_data = paginator.get_page(page)
+        serializer = ParkingSerializers(paginated_data, many=True)
+        context = {
+            "parking": serializer.data,
+            "page": paginated_data.number,
+            "total_pages": paginator.num_pages,
+        }
+        return HttpResponse(template.render(context, req)) 
 
     elif req.method == "POST":
         serializer = NewParkingSerializers(data=req.data)
         if serializer.is_valid():
             serializer.save()
-            updateParkingSlot(req.data["slot"])
+            update_parking_slot(req.data["slot"])
             return redirect("/")
-        return JsonResponse({"message":"An error occured", "success":False})
+        return Response({"message":"An error occured", "success":False}, status=400)
 
 @csrf_exempt
 @api_view(["PUT", "DELETE", "GET"])
-@login_required
+# @login_required
 def user(req, userId):
     obj = Users.objects.get(id=userId)
     if req.method == "DELETE":
         try:
             obj.delete()
+            return Response({"message":"Successfully deleted user", "success":True}, status=200)
         except Exception as e:
-            return JsonResponse({"message": str(e), "success":False})
-        return JsonResponse({"message":"Successfully deleted user", "success":True})
+            return Response({"message": str(e), "success":False}, status=400)
 
     elif req.method == "GET":
         serializer = UsersSerializers(instance=obj)            
-        return JsonResponse({"data":serializer.data, "success":True})
+        return Response({"data":serializer.data, "success":True}, status=200)
 
     elif req.method == "PUT":
         serializer = UsersSerializers(obj, data=req.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse({"message":"Successfully updated user data", "success":True})
-        return JsonResponse({"message":"An error has occured try again later!!!", "success":False})
+            return Response({"message":"Successfully updated user data", "success":True}, status=200)
+        return Response({"message":"An error has occured try again later!!!", "success":False}, status=400)
 
 @csrf_exempt
 @api_view(["GET", "POST"])
-@login_required
+# @login_required
 def users(req):
     template = loader.get_template("users.html")
-    context = {}
     if req.method == "GET":
+        page = req.GET.get("page", 1)
         obj = Users.objects.all()
-        serializer = UsersSerializers(obj, many=True)
-        context["users"] = serializer.data
+        paginator = Paginator(obj, 10)
+        paginated_users = paginator.get_page(page)
+        serializer = UsersSerializers(paginated_users, many=True)
+        context = {
+            "users": serializer.data,
+            "page": paginated_users.number,
+            "total_pages": paginator.num_pages,
+        }
         return HttpResponse(template.render(context, req))
 
     elif req.method == "POST":
         serializer = UsersSerializers(data=req.data)
         if serializer.is_valid():
             serializer.save()
-            # return JsonResponse({"message":"successfully added a new system user", "success":True})
-            return redirect("/users")
-        return JsonResponse({"message":"An error has occured", "success":False})
+            return Response({"message":"successfully added a new system user", "success":True}, status=200)
+        return Response({"message":"An error has occured", "success":False}, status=400)
 
-@csrf_exempt
 @api_view(["PUT", "DELETE", "GET"])
-@login_required
+# @login_required
 def slot(req, id):
     obj = Slots.objects.get(id=id)
     if req.method == "DELETE":
         try:
             obj.delete()
+            return Response({"message":"Successfully deleted Parking Slot", "success":True}, status=200)
         except Exception as e:
-            return JsonResponse({"message": str(e), "success":False})
-        return JsonResponse({"message":"Successfully deleted Parking Slot", "success":True})
+            return Response({"message": str(e), "success":False}, status=400)
 
     elif req.method == "GET":
         serializer = SlotsSerializers(instance=obj)            
-        return JsonResponse({"data":serializer.data, "success":True})
+        return Response({"data":serializer.data, "success":True}, status=200)
 
     elif req.method == "PUT":
         serializer = SlotsSerializers(obj, data=req.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            print("helo")
-            return JsonResponse({"message":"Successfully updated slot's data", "success":True})
-        return JsonResponse({"message":"An error has occured try again later!!!", "success":False})
+            return Response({"message":"Successfully updated slot's data", "success":True}, status=200)
+        return Response({"message":"An error has occured try again later!!!", "success":False}, status=400)
 
 @api_view(["GET", "POST"])
-@login_required
+# @login_required
 def slots(req):
     if req.method == "GET":
-        context = {}
         template = loader.get_template("slots.html")
+        page = req.GET.get("page", 1)
         obj = Slots.objects.all()
-        serializer = SlotsSerializers(obj, many=True)
-        context["slots"] = serializer.data
+        paginator = Paginator(obj, 10)
+        paginated_slots = paginator.get_page(page)
+        serializer = SlotsSerializers(paginated_slots, many=True)
+        context = {
+            "slots": serializer.data,
+            "page": paginated_slots.number,
+            "total_pages": paginator.num_pages,
+        }
         return HttpResponse(template.render(context, req))
 
     elif req.method == "POST":
         serializer = SlotsSerializers(data=req.data)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse({"message":"successfully added a new parking slot", "success":True})
-        return JsonResponse({"message":"An error has occured", "success":False})
+            return Response({"message":"successfully added a new parking slot", "success":True}, status=200)
 
+        return Response({"message":"An error has occured", "success":False}, status=400)
 
 @api_view(["GET"])
-@login_required
+# @login_required
 def index(req):
     template = loader.get_template("index.html")
     context = {}
-    context['isAdmin'] = req.user.is_superuser
-    obj = Slots.objects.all()
+    # context['isAdmin'] = req.user.is_superuser
+    context['isAdmin'] = True
+    obj = Slots.objects.filter(isAvailable=True)
     serializer = SlotsSerializers(obj, many=True)
     context["slots"] = serializer.data
     return HttpResponse(template.render(context, req))

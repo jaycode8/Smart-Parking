@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 messageBox.classList.add('bg-red-500');
             })
             .catch(error => {
-                console.error('Error creating user:', error.response.data);
+                console.error('Error creating user:', error);
                 messageSpan.textContent = 'Error creating user. Please try again.';
                 messageSpan.classList.add('bg-red-500');
             });
