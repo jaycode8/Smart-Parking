@@ -4,108 +4,53 @@ const newSlotButton = document.getElementById('new-slot');
 const closeModalBtn = document.getElementById('close-modal');
 const messageSpan = document.querySelector('#slots-modal span');
 
+newSlotButton.addEventListener('click', () => {
+    modal.classList.toggle('hidden');
+    modal.classList.toggle('flex');
+});
 
-document.addEventListener('DOMContentLoaded', function () {
-    newSlotButton.addEventListener('click', () => {
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
-    });
+closeModalBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+});
 
-    closeModalBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    });
-
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        const formData = {
-            slotId: document.getElementById('slotId').value,
-            floor: document.getElementById('floor').value,
-        };
-        messageSpan.textContent = '';
-        axios.defaults.xsrfCookieName = 'csrftoken';
-        axios.defaults.xsrfHeaderName = 'X-CSRFToken';
-        axios.defaults.withCredentials = true;
-        try {
-            const response = axios.post('/slots', formData);
-            messageSpan.textContent = response.data.message;
-
-            if (response.data.success) {
-                messageSpan.classList.add('bg-green-500');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    window.location.reload();
-                }, 1500);
-                return
-            }
-            messageSpan.classList.add('bg-red-500');
-
-        } catch (error) {
-            console.error('Error creating slot:', error.response);
-            messageSpan.textContent = 'Error creating slot. Please try again.';
-            messageSpan.classList.add('bg-red-500');
-        }
-    });
-
-})
-
-const editSlot = async (id) => {
-    try {
-        const res = await axios.get(`/slot/${id}`)
-        const slotDetails = res.data.data
-        modal.classList.toggle('hidden');
-        modal.classList.toggle('flex');
-        document.getElementById('slotId').value = slotDetails.slotId
-        let floorSelect = document.getElementById('floor');
-        floorSelect.value = slotDetails.floor;
-
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-
-            const updatedData = {
-                slotId: document.getElementById('slotId').value,
-                floor: document.getElementById('floor').value,
-            };
-
-            try {
-                const res = await axios.put(`/slot/${id}`, updatedData);
-                messageSpan.textContent = '';
-                messageSpan.textContent = res.data.message;
-                if (res.data.success) {
-                    messageSpan.classList.add('bg-green-500');
-                    setTimeout(() => {
-                        modal.classList.add('hidden');
-                        modal.classList.remove('flex');
-                        window.location.reload();
-                    }, 1500);
-                    return
-                }
-                messageSpan.classList.add('bg-red-500');
-            } catch (error) {
-                messageSpan.classList.add('bg-red-500');
-                messageSpan.textContent = 'Error updating parking slot. Please try again.'
-            }
-        };
-    } catch (error) {
-        console.log(error)
-    }
-}
-
-const deleteSlot = (slot) =>{
+const deleteSlot = (slot, event) =>{
+    event.stopPropagation();
     if (confirm('Are you sure you want to delete this slot?')) {
         axios.delete(`/slot/${slot}`)
-            .then(response => {
-                console.log('Slot deleted successfully:', response.data);
-                const row = document.querySelector(`tr[data-slot-id="${slot}"]`);
-                if (row) {
-                    row.remove();
-                }
+        .then(response => {
+            alert(response.data.message);
+            const row = document.querySelector(`tr[data-slot-id="${slot}"]`);
+            if (row) {
+                row.remove();
+            }
             })
             .catch(error => {
                 console.error('Error deleting slot:', error.response.data);
                 alert('Error deleting slot. Please try again.');
-            });
+        });
     }
 }
+
+let currentPage = 1;
+let totalPages = 1;
+
+const fetchSlots = (page) => {
+    if (page < 1 || page > totalPages) return;
+
+    fetch(`/slots?page=${page}`)
+        .then(response => response.text())
+        .then(html => {
+            document.querySelector("#table-body").innerHTML = 
+                new DOMParser().parseFromString(html, "text/html").querySelector("#table-body").innerHTML;
+
+            currentPage = page;
+            totalPages = parseInt(document.querySelector("#total-pages").textContent) || 1;
+            document.querySelector("#page-info").textContent = `Page ${currentPage} of ${totalPages}`;
+        })
+        .catch(error => console.error("Error fetching slots:", error));
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchSlots(currentPage);
+});

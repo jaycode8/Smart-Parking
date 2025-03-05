@@ -6,6 +6,7 @@ urlpatterns = [
     path('slots', views.slots),
     path('slot/<slug:id>', views.slot),
     path('parking', views.parking),
+    path('parking/<slug:id>', views.parked_car),
     path('users', views.users),
     path('signin', views.signin),
     path('user/<slug:userId>', views.user),

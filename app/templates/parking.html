@@ -40,7 +40,7 @@
                                 <option value="First Floor">First Floor</option>
                             </select>
                         </div>
-                        </div>
+                    </div>
                     <div class="grid justify-end">
                         <button type="submit"
                             class="text-white inline-flex items-center bg-blue-700 font-medium text-sm px-5 py-2 text-center">
@@ -51,6 +51,9 @@
             </div>
         </div>
     </div>
+    
+    {% include 'includes/menu.html' %}
+
     <h1 class="uppercase font-bold text-2xl">Parking Slots Allocation</h1>
     <button id="new-slot"
         class="absolute right-5 py-1 px-8 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">New
@@ -67,11 +70,23 @@
             </thead>
             <tbody id="table-body">
                 {% for data in parking %}
-                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{data.slot.slotId}}</th>
+                <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer hover:cursor-pointer group"
+                    data-parking-id="{{ data.id }}">
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{data.slot.slotId}}
+                    </th>
                     <td class="px-6 py-4">{{data.slot.floor}}</td>
                     <td class="px-6 py-4">{{data.vehicle}}</td>
-                    <td class="px-6 py-4">{{data.createdAt}}</td>
+                    <td class="px-6 py-4 flex relative">
+                        <span class="formatted-date">{{ data.createdAt }}</span>
+                        <span class="cancel-icon hidden group-hover:inline-block absolute right-1">
+                            <svg onclick="deleteParking('{{ data.id }}')"
+                                class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </span>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -79,13 +94,56 @@
     </div>
 
     <div class="mt-4 flex justify-center space-x-2 absolute bottom-2">
-        <button id="prev-btn"
+        <span id="total-pages" hidden>{{ total_pages }}</span>
+        <button id="prev-btn" onclick="fetchData(currentPage - 1)"
             class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 rounded hover:bg-gray-300">Previous</button>
         <span id="page-info" class="px-3 py-2 text-sm font-medium text-gray-700">Page 1</span>
-        <button id="next-btn"
+        <button id="next-btn" onclick="fetchData(currentPage + 1)"
             class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-200 rounded hover:bg-gray-300">Next</button>
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const dateSpan = document.querySelector(".formatted-date");
+        const date = new Date(dateSpan.textContent);
+        const formattedTime = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }).replace(":", "") + "HR";
+        const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        dateSpan.textContent = `${formattedTime} ${formattedDate}`;
+    });
+</script>
+<script>
+    const deleteParking = async (id) => {
+        if (confirm('Are you sure you want to omit this record?')) {
+            const res = await axios.delete(`/parking/${id}`)
+            alert(res.data.message)
+            const row = document.querySelector(`tr[data-parking-id="${id}"]`);
+            if (row) {
+                row.remove();
+            }
+        }
+    }
 
-<script src="{% static '/js/slots.js' %}"></script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    const fetchData = (page) => {
+        if (page < 1 || page > totalPages) return;
+
+        fetch(`/parking?page=${page}`)
+            .then(response => response.text())
+            .then(html => {
+                document.querySelector("#table-body").innerHTML =
+                    new DOMParser().parseFromString(html, "text/html").querySelector("#table-body").innerHTML;
+
+                currentPage = page;
+                totalPages = parseInt(document.querySelector("#total-pages").textContent) || 1;
+                document.querySelector("#page-info").textContent = `Page ${currentPage} of ${totalPages}`;
+            })
+            .catch(error => console.error("Error fetching parking data:", error));
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchData(currentPage);
+    });
+</script>
 {% endblock %}
