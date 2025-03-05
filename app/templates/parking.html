@@ -3,6 +3,7 @@
 {% block title %}View Slots{% endblock %}
 {% block content %}
 
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 <div class="w-full h-screen flex flex-col items-center p-5">
     <div id="slots-modal" tabindex="-1" aria-hidden="true"
         class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full max-h-full bg-[rgba(0,0,0,0.5)]">
@@ -26,8 +27,8 @@
                 <form class="p-4 md:p-5" method="post" action="/slots">
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="slotId" class="block mb-2 text-sm font-medium text-gray-900">Slot Id</label>
-                            <input type="text" name="slotId" id="slotId"
+                            <label for="slot_id" class="block mb-2 text-sm font-medium text-gray-900">Slot Id</label>
+                            <input type="text" name="slot_id" id="slot_id"
                                 class="border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none"
                                 placeholder="" required>
                         </div>
@@ -51,13 +52,10 @@
             </div>
         </div>
     </div>
-    
+
     {% include 'includes/menu.html' %}
 
-    <h1 class="uppercase font-bold text-2xl">Parking Slots Allocation</h1>
-    <button id="new-slot"
-        class="absolute right-5 py-1 px-8 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">New
-        Slot</button>
+    <h1 class="uppercase font-bold text-2xl">Parking Allocations</h1>
     <div class="w-full relative overflow-x-auto sm:rounded-lg p-7">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500">
             <thead class="text-xs text-white uppercase bg-gray-700">
@@ -72,12 +70,12 @@
                 {% for data in parking %}
                 <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer hover:cursor-pointer group"
                     data-parking-id="{{ data.id }}">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{data.slot.slotId}}
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{data.slot.slot_id}}
                     </th>
                     <td class="px-6 py-4">{{data.slot.floor}}</td>
                     <td class="px-6 py-4">{{data.vehicle}}</td>
-                    <td class="px-6 py-4 flex relative">
-                        <span class="formatted-date">{{ data.createdAt }}</span>
+                    <td class="px-6 py-4 flex relative date-time" data-datetime="{{ data.created_at }}">
+                        <span class="formatted-date">{{ data.created_at }}</span>
                         <span class="cancel-icon hidden group-hover:inline-block absolute right-1">
                             <svg onclick="deleteParking('{{ data.id }}')"
                                 class="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer" fill="none"
@@ -103,18 +101,14 @@
     </div>
 </div>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const dateSpan = document.querySelector(".formatted-date");
-        const date = new Date(dateSpan.textContent);
-        const formattedTime = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }).replace(":", "") + "HR";
-        const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-        dateSpan.textContent = `${formattedTime} ${formattedDate}`;
-    });
-</script>
-<script>
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     const deleteParking = async (id) => {
         if (confirm('Are you sure you want to omit this record?')) {
-            const res = await axios.delete(`/parking/${id}`)
+            const res = await axios.delete(`/parking/${id}`, {
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
             alert(res.data.message)
             const row = document.querySelector(`tr[data-parking-id="${id}"]`);
             if (row) {
@@ -134,6 +128,18 @@
             .then(html => {
                 document.querySelector("#table-body").innerHTML =
                     new DOMParser().parseFromString(html, "text/html").querySelector("#table-body").innerHTML;
+
+                document.querySelectorAll(".date-time").forEach(el => {
+                    const isoDate = el.dataset.datetime;
+                    const date = new Date(isoDate);
+                    const formattedTime = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }).replace(":", "") + "HR";
+                    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                    const dateSpan = el.querySelector(".formatted-date");
+                    console.log(formattedDate)
+                    if (dateSpan) {
+                        dateSpan.textContent = `${formattedTime} ${formattedDate}`;
+                    }
+                });
 
                 currentPage = page;
                 totalPages = parseInt(document.querySelector("#total-pages").textContent) || 1;

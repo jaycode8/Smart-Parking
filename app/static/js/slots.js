@@ -16,8 +16,13 @@ closeModalBtn.addEventListener('click', () => {
 
 const deleteSlot = (slot, event) =>{
     event.stopPropagation();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     if (confirm('Are you sure you want to delete this slot?')) {
-        axios.delete(`/slot/${slot}`)
+        axios.delete(`/slot/${slot}`,{
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
         .then(response => {
             alert(response.data.message);
             const row = document.querySelector(`tr[data-slot-id="${slot}"]`);
@@ -43,6 +48,17 @@ const fetchSlots = (page) => {
         .then(html => {
             document.querySelector("#table-body").innerHTML = 
                 new DOMParser().parseFromString(html, "text/html").querySelector("#table-body").innerHTML;
+            
+            document.querySelectorAll(".date-time").forEach(el => {
+                const isoDate = el.dataset.datetime;
+                const date = new Date(isoDate);
+                const formattedTime = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }).replace(":", "") + "HR";
+                const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+                const dateSpan = el.querySelector(".formatted-date");
+                if (dateSpan) {
+                    dateSpan.textContent = `${formattedTime} ${formattedDate}`;
+                }
+            });
 
             currentPage = page;
             totalPages = parseInt(document.querySelector("#total-pages").textContent) || 1;

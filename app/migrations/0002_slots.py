@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('floor', models.CharField(max_length=50)),
                 ('isAvailable', models.BooleanField(default=False)),
                 ('createdAt', models.DateTimeField(auto_now_add=True)),
-                ('updatedAt', models.DateTimeField(auto_now=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
             ],
         ),
     ]

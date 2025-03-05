@@ -32,12 +32,12 @@ class UsersManager(BaseUserManager):
 
 class Users(AbstractBaseUser):
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
-    firstName = models.CharField(max_length=255)
-    lastName = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
     username = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255, unique=True)
     phone = models.CharField(max_length=15, unique=True)
-    idNo = models.CharField(max_length=10, unique=True)
+    id_no = models.CharField(max_length=10, unique=True)
     gender = models.CharField(max_length=20)
     password = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -51,6 +51,10 @@ class Users(AbstractBaseUser):
 
     objects = UsersManager()
 
+    class Meta:
+        db_table = "user"
+        verbose_name = "user"
+        verbose_name_plural = "users"
     
     def __str__(self):
         return self.email
@@ -64,15 +68,25 @@ class Users(AbstractBaseUser):
 
 class Slots(models.Model):
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
-    slotId = models.CharField(max_length=50, unique=True)
+    slot_id = models.CharField(max_length=50, unique=True)
     floor = models.CharField(max_length=50)
-    isAvailable = models.BooleanField(default=True)
-    createdAt = models.DateTimeField(auto_now_add=True)
-    updatedAt = models.DateTimeField(auto_now=True)
+    is_available = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "slot"
+        verbose_name = "slot"
+        verbose_name_plural = "slots"
 
 class Parking(models.Model):
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False)
     slot = models.ForeignKey(Slots, on_delete=models.CASCADE)
     vehicle = models.CharField(max_length=10)
-    createdAt = models.DateTimeField(auto_now_add=True)
-    updatedAt = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "parking"
+        verbose_name = "parking"
+        verbose_name_plural = "parkings"

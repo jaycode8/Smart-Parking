@@ -1,4 +1,3 @@
-// Toggle Modal
 const modal = document.getElementById('crud-modal');
 const manualAssignBtn = document.getElementById('manual-assign');
 const closeModalBtn = document.getElementById('close-modal');

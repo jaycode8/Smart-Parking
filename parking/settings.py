@@ -132,8 +132,15 @@ USE_TZ = True
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
+
+SESSION_ENGINE = "django.contrib.sessions.backends.db"  # Store sessions in DB
+SESSION_COOKIE_AGE = 3600  # Session expires after 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session active even after closing browser
+SESSION_SAVE_EVERY_REQUEST = True  # Save session data on every request
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

@@ -38,7 +38,7 @@
                                 class="border border-gray-300 text-gray-900 bg-white text-sm rounded-lg block w-full p-2.5 focus:outline-none">
                                 <option selected="">Select Parking Slot</option>
                                 {% for slot in slots %}
-                                    <option value="{{slot.id}}">{{slot.slotId}}</option>
+                                    <option value="{{slot.id}}">{{slot.slot_id}}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -63,7 +63,6 @@
     </div>
 
     <div class="w-1/6 p-5 grid items-end relative">
-        <!-- <a href="/logout" class="absolute top-5 right-5">logout</a> -->
         <div class="absolute top-5 right-5 bg-red-500">
             <button id="user-menu-button" class="absolute top-1 right-5 flex items-center space-x-2 text-gray-900 focus:outline-none">
                 <svg width="2rem" height="2rem" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -84,7 +83,7 @@
             <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200">
                 <div class="p-3">
                     <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
-                    <p class="text-xs text-gray-600">{{ user.lastName }}  {{ user.firstName }}</p>
+                    <p class="text-xs text-gray-600">{{ user.last_name }}  {{ user.first_name }}</p>
                     <p class="text-xs text-gray-600">{{ user.email }}</p>
                     <p class="text-xs text-gray-600">{{ user.phone }}</p>
                     <p class="text-xs text-gray-600">{{ user.gender }}</p>
