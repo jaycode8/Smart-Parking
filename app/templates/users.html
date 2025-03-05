@@ -25,18 +25,20 @@
                     </button>
                 </div>
                 <form class="p-4 md:p-5" onsubmit="handleSubmit(event)">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <input type="text" class="hidden" name="id" id="id">
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="firstName" class="block mb-2 text-sm font-medium text-gray-900">First
+                            <label for="first_name" class="block mb-2 text-sm font-medium text-gray-900">First
                                 Name</label>
-                            <input type="text" name="firstName" id="firstName"
+                            <input type="text" name="first_name" id="first_name"
                                 class="border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none"
                                 placeholder="" required>
                         </div>
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="lastName" class="block mb-2 text-sm font-medium text-gray-900">Last Name</label>
-                            <input type="text" name="lastName" id="lastName"
+                            <label for="last_name" class="block mb-2 text-sm font-medium text-gray-900">Last
+                                Name</label>
+                            <input type="text" name="last_name" id="last_name"
                                 class="border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none"
                                 placeholder="" required>
                         </div>
@@ -47,8 +49,8 @@
                                 placeholder="" required>
                         </div>
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="idNo" class="block mb-2 text-sm font-medium text-gray-900">Id No.</label>
-                            <input type="number" name="idNo" id="idNo"
+                            <label for="id_no" class="block mb-2 text-sm font-medium text-gray-900">Id No.</label>
+                            <input type="number" name="id_no" id="id_no"
                                 class="border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 focus:outline-none"
                                 placeholder="" required>
                         </div>
@@ -93,8 +95,8 @@
     </div>
 
     {% include 'includes/menu.html' %}
-    
-    <h1 class="uppercase font-bold text-2xl">Active system Users</h1>
+
+    <h1 class="uppercase font-bold text-2xl">Active system Users</h1>    
     <button id="new-user"
         class="absolute right-5 py-1 px-8 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none border border-gray-500">New
         User</button>
@@ -116,8 +118,8 @@
                 <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer group" data-user-id="{{ user.id }}"
                     onclick="editUser('{{ user.id }}')">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                        {{user.lastName}} {{user.firstName}}</th>
-                    <td class="px-6 py-4">{{user.idNo}}</td>
+                        {{user.last_name}} {{user.first_name}}</th>
+                    <td class="px-6 py-4">{{user.id_no}}</td>
                     <td class="px-6 py-4">{{user.username}}</td>
                     <td class="px-6 py-4">{{user.phone}}</td>
                     <td class="px-6 py-4">{{user.email}}</td>
@@ -155,39 +157,39 @@
 
 <script src="{% static '/js/users.js' %}"></script>
 <script>
-    const handleSubmit = async(event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        const token = localStorage.getItem("smartPToken");
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const id = document.getElementById('id').value;
         const password = document.getElementById('password').value;
         const formData = {
-            firstName: document.getElementById('firstName').value,
-            lastName: document.getElementById('lastName').value,
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
             username: document.getElementById('username').value,
-            idNo: document.getElementById('idNo').value,
+            id_no: document.getElementById('id_no').value,
             phone: document.getElementById('phone').value,
             email: document.getElementById('email').value,
             gender: document.getElementById('gender').value,
         };
-        if (password != ""){
+        if (password != "") {
             formData["password"] = password
         }
-        const res = id != "" ? 
-            await axios.put(`/user/${id}`, formData,{
-                headers:{
-                    Authorization: `Bearer ${token}`,
+        const res = id != "" ?
+            await axios.put(`/user/${id}`, formData, {
+                headers: {
+                    'X-CSRFToken': csrfToken
                 }
-            }) : await axios.post('/users', formData,{
-                headers:{
-                    Authorization: `Bearer ${token}`,
+            }) : await axios.post('/users', formData, {
+                headers: {
+                    'X-CSRFToken': csrfToken
                 }
-            }) 
+            })
         alert(res.data.message)
-        if (res.data.success){
+        if (res.data.success) {
             location.reload(true);
         }
     }
-    
+
     const editUser = async (userId) => {
         const res = await axios.get(`/user/${userId}`)
         const userDetails = res.data.data
@@ -195,10 +197,10 @@
         modal.classList.toggle('hidden');
         modal.classList.toggle('flex');
         document.getElementById('id').value = userDetails.id
-        document.getElementById('firstName').value = userDetails.firstName
-        document.getElementById('lastName').value = userDetails.lastName
+        document.getElementById('first_name').value = userDetails.first_name
+        document.getElementById('last_name').value = userDetails.last_name
         document.getElementById('username').value = userDetails.username
-        document.getElementById('idNo').value = userDetails.idNo
+        document.getElementById('id_no').value = userDetails.id_no
         document.getElementById('phone').value = userDetails.phone
         document.getElementById('email').value = userDetails.email
         let genderSelect = document.getElementById('gender');

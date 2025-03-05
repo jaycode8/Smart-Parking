@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .models import Users, Slots, Parking
+from django.contrib.auth.hashers import make_password
 from .serializers import UsersSerializers, SlotsSerializers, ParkingSerializers, NewParkingSerializers
 from .utils.admin import createAdmin
 from django.views.decorators.csrf import csrf_exempt
@@ -36,7 +37,10 @@ if not os.path.exists(PLATES_DIR):
 
 # Create your views here.
 
-createAdmin()
+try:
+    createAdmin()
+except:
+    pass
 
 @csrf_exempt
 def detect_plate(request):
@@ -67,8 +71,9 @@ def detect_plate(request):
 
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             plates = plate_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
-
             if len(plates) == 0:
+                cv2.imwrite("test.png", image)
+                print("Plates not detected")
                 return JsonResponse({"message": "No plates detected"}, status=200)
 
             detected_plates = []
@@ -82,7 +87,7 @@ def detect_plate(request):
                 filename = f"plate_{timestamp}_{i}.jpg"
                 file_path = os.path.join(PLATES_DIR, filename)
                 plate_img = cv2.resize(plate_img, (660, 220), interpolation=cv2.INTER_AREA)
-                # cv2.imwrite(file_path, plate_img)
+                cv2.imwrite(file_path, plate_img)
                 number_plates = plate_extraction(plate_img)
                 if number_plates == "":
                     continue
@@ -98,20 +103,22 @@ def detect_plate(request):
                 return JsonResponse({"message": "Car unparked"}, status=200)
 
             except Parking.DoesNotExist:
-                available_slot = Slots.objects.filter(isAvailable=True).first()
+                available_slot = Slots.objects.filter(is_available=True).first()
 
                 if not available_slot:
-                    return JsonResponse({"error": "No available parking slot slots"}, status=400)
+                    print("No available parking slots at the moment")
+                    return JsonResponse({"error": "No available parking slots at the moment"}, status=400)
 
                 park_data = {
                     "slot":available_slot.id,
                     "vehicle":number_plates
                 }
+                print(park_data)
                 serializer = NewParkingSerializers(data=park_data)
                 if serializer.is_valid():
                     serializer.save()
                     update_parking_slot(available_slot.id)
-                    return JsonResponse({"message": f"{number_plates} assigned slot {available_slot.slotId} located at {available_slot.floor}"}, status=200)
+                    return JsonResponse({"message": f"{number_plates} assigned slot {available_slot.slot_id} located at {available_slot.floor}"}, status=200)
                     
                 return JsonResponse({"message": f"Unable to auto park {number_plates} at the moment try manuall assign"}, status=200)
 
@@ -125,6 +132,7 @@ def logOut(req):
     logout(req)
     return redirect("/")
 
+@csrf_exempt
 @api_view(["GET", "POST"])
 def signin(req):
     if req.method == "GET":
@@ -144,21 +152,18 @@ def signin(req):
         if not found_user:
             return Response({"message": "The password is incorect", "success": False}, status=400)
 
-        token, _ = Token.objects.get_or_create(user=usr)
-        token.created = datetime.now()
-        token.save()
         login(req, found_user)
         req.session['sessionId'] = str(found_user.id)
         req.session.set_expiry(3600)
         serializer = UsersSerializers(instance=usr)
-        return Response({"message": "Successfully loged into your account", "user":serializer.data, "success": True, "token": token.key}, status=200)
+        return Response({"message": "Successfully loged into your account", "user":serializer.data, "success": True}, status=200)
 
 def update_parking_slot(id):
     slot = Slots.objects.get(id=id)
-    if slot.isAvailable:
-        slot.isAvailable = False
+    if slot.is_available:
+        slot.is_available = False
     else:
-        slot.isAvailable = True
+        slot.is_available = True
     slot.save()
 
 @api_view(["DELETE"])
@@ -170,12 +175,12 @@ def parked_car(req, id):
 
 
 @api_view(["GET", "POST"])
-# @login_required
+@login_required
 def parking(req):
     if req.method == "GET":
         template = loader.get_template("parking.html")
         page = req.GET.get("page", 1)
-        obj = Parking.objects.all()
+        obj = Parking.objects.all().order_by("-created_at")
         paginator = Paginator(obj, 10)
         paginated_data = paginator.get_page(page)
         serializer = ParkingSerializers(paginated_data, many=True)
@@ -196,7 +201,7 @@ def parking(req):
 
 @csrf_exempt
 @api_view(["PUT", "DELETE", "GET"])
-# @login_required
+@login_required
 def user(req, userId):
     obj = Users.objects.get(id=userId)
     if req.method == "DELETE":
@@ -211,6 +216,7 @@ def user(req, userId):
         return Response({"data":serializer.data, "success":True}, status=200)
 
     elif req.method == "PUT":
+        req.data["password"] = make_password(req.data["password"])
         serializer = UsersSerializers(obj, data=req.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -219,12 +225,12 @@ def user(req, userId):
 
 @csrf_exempt
 @api_view(["GET", "POST"])
-# @login_required
+@login_required
 def users(req):
     template = loader.get_template("users.html")
     if req.method == "GET":
         page = req.GET.get("page", 1)
-        obj = Users.objects.all()
+        obj = Users.objects.all().order_by("-created_at")
         paginator = Paginator(obj, 10)
         paginated_users = paginator.get_page(page)
         serializer = UsersSerializers(paginated_users, many=True)
@@ -243,7 +249,7 @@ def users(req):
         return Response({"message":"An error has occured", "success":False}, status=400)
 
 @api_view(["PUT", "DELETE", "GET"])
-# @login_required
+@login_required
 def slot(req, id):
     obj = Slots.objects.get(id=id)
     if req.method == "DELETE":
@@ -265,12 +271,12 @@ def slot(req, id):
         return Response({"message":"An error has occured try again later!!!", "success":False}, status=400)
 
 @api_view(["GET", "POST"])
-# @login_required
+@login_required
 def slots(req):
     if req.method == "GET":
         template = loader.get_template("slots.html")
         page = req.GET.get("page", 1)
-        obj = Slots.objects.all()
+        obj = Slots.objects.all().order_by("-created_at")
         paginator = Paginator(obj, 10)
         paginated_slots = paginator.get_page(page)
         serializer = SlotsSerializers(paginated_slots, many=True)
@@ -290,13 +296,12 @@ def slots(req):
         return Response({"message":"An error has occured", "success":False}, status=400)
 
 @api_view(["GET"])
-# @login_required
+@login_required
 def index(req):
     template = loader.get_template("index.html")
     context = {}
-    # context['isAdmin'] = req.user.is_superuser
-    context['isAdmin'] = True
-    obj = Slots.objects.filter(isAvailable=True)
+    context['isAdmin'] = req.user.is_superuser
+    obj = Slots.objects.filter(is_available=True)
     serializer = SlotsSerializers(obj, many=True)
     context["slots"] = serializer.data
     return HttpResponse(template.render(context, req))

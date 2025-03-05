@@ -6,14 +6,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', function (event) {
         event.preventDefault();
-
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const formData = {
             username: document.getElementById('username').value,
             password: document.getElementById('password').value,
         };
         messageSpan.textContent = '';
 
-        axios.post('/signin', formData)
+        axios.post('/signin', formData,{
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
             .then(response => {
                 console.log(response.data)
                 messageSpan.textContent = response.data.message;
@@ -21,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 messageBox.classList.remove('hidden');
                 if(response.data.success){
                     messageBox.classList.add('bg-green-800');
-                    localStorage.setItem('smartPToken', response.data.token);
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1500);

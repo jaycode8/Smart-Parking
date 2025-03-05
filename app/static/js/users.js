@@ -19,8 +19,13 @@ closeModalBtn.addEventListener('click', () => {
 
 const deleteUser = (userId, event) => {
     event.stopPropagation();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     if (confirm('Are you sure you want to delete this user?')) {
-        axios.delete(`/user/${userId}`)
+        axios.delete(`/user/${userId}`,{
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
             .then(response => {
                 console.log('User deleted successfully:', response.data);
                 const row = document.querySelector(`tr[data-user-id="${userId}"]`);
