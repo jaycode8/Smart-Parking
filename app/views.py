@@ -26,8 +26,10 @@ import base64
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from .services import plate_extraction
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
-CASCADE_PATH = os.path.join(settings.BASE_DIR, 'app/static/plates.xml')
+CASCADE_PATH = os.path.join(settings.BASE_DIR, 'static/plates.xml')
 plate_cascade = cv2.CascadeClassifier(CASCADE_PATH)
 
 # Directory to store cropped plate images
@@ -47,6 +49,7 @@ def detect_plate(request):
     if request.method == "POST":
         try:
             image = None
+            channel_layer = get_channel_layer()
 
             # Handle File Upload (Postman)
             if 'image' in request.FILES:
@@ -72,8 +75,10 @@ def detect_plate(request):
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             plates = plate_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
             if len(plates) == 0:
-                cv2.imwrite("test.png", image)
-                print("Plates not detected")
+                async_to_sync(channel_layer.group_send)(
+                    "notification",
+                    {"type":"send_message", "message":"Detection failed try manual asignment"}
+                )
                 return JsonResponse({"message": "No plates detected"}, status=200)
 
             detected_plates = []
@@ -100,26 +105,41 @@ def detect_plate(request):
                 exist_parking = Parking.objects.get(vehicle=number_plates)
                 update_parking_slot(exist_parking.slot.id)
                 exist_parking.delete()
+                async_to_sync(channel_layer.group_send)(
+                    "notification",
+                    {"type":"send_message", "message":"Car Unpacked"}
+                )
                 return JsonResponse({"message": "Car unparked"}, status=200)
 
             except Parking.DoesNotExist:
                 available_slot = Slots.objects.filter(is_available=True).first()
 
                 if not available_slot:
-                    print("No available parking slots at the moment")
+                    async_to_sync(channel_layer.group_send)(
+                        "notification",
+                        {"type":"send_message", "message":"No available parking slots at the moment"}
+                    )
                     return JsonResponse({"error": "No available parking slots at the moment"}, status=400)
 
                 park_data = {
                     "slot":available_slot.id,
                     "vehicle":number_plates
                 }
-                print(park_data)
                 serializer = NewParkingSerializers(data=park_data)
                 if serializer.is_valid():
                     serializer.save()
                     update_parking_slot(available_slot.id)
-                    return JsonResponse({"message": f"{number_plates} assigned slot {available_slot.slot_id} located at {available_slot.floor}"}, status=200)
+                    async_to_sync(channel_layer.group_send)(
+                        "notification",
+                        {"type":"send_message", "message":f"{number_plates} assigned slot {available_slot.slot_id} located at {available_slot.floor}"}
+                    )
                     
+                    return JsonResponse({"message": f"{number_plates} assigned slot {available_slot.slot_id} located at {available_slot.floor}"}, status=200)
+
+                async_to_sync(channel_layer.group_send)(
+                    "notification",
+                    {"type":"send_message", "message":f"Unable to auto park {number_plates} at the moment try manuall assign"}
+                )
                 return JsonResponse({"message": f"Unable to auto park {number_plates} at the moment try manuall assign"}, status=200)
 
         except Exception as e:
@@ -171,7 +191,7 @@ def parked_car(req, id):
     obj = Parking.objects.get(id=id)
     update_parking_slot(obj.slot.id)
     obj.delete()
-    return JsonResponse({"message": "Car unparkde"}, status=200)
+    return JsonResponse({"message": "Car unparked"}, status=200)
 
 
 @api_view(["GET", "POST"])

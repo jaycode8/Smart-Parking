@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'app',
     'rest_framework',
     'rest_framework.authtoken',
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -77,6 +78,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'parking.wsgi.application'
 
+ASGI_APPLICATION = "parking.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -146,6 +154,8 @@ SESSION_SAVE_EVERY_REQUEST = True  # Save session data on every request
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
