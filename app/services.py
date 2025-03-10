@@ -16,7 +16,6 @@ def plate_extraction(img):
     # Find contours
     contours, _ = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     sorted_contours = sorted(contours, key=lambda ctr: cv2.boundingRect(ctr)[0])
-
     plate_num = ""
     for cnt in sorted_contours:
         x, y, w, h = cv2.boundingRect(cnt)
