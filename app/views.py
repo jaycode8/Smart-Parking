@@ -25,7 +25,7 @@ import numpy as np
 import base64
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from .services import plate_extraction
+from .services import plate_extraction, bright_plate_extraction
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
@@ -75,10 +75,6 @@ def detect_plate(request):
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             plates = plate_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(50, 50))
             if len(plates) == 0:
-                async_to_sync(channel_layer.group_send)(
-                    "notification",
-                    {"type":"send_message", "message":"Detection failed try manual asignment"}
-                )
                 return JsonResponse({"message": "No plates detected"}, status=200)
 
             detected_plates = []
@@ -92,8 +88,13 @@ def detect_plate(request):
                 filename = f"plate_{timestamp}_{i}.jpg"
                 file_path = os.path.join(PLATES_DIR, filename)
                 plate_img = cv2.resize(plate_img, (660, 220), interpolation=cv2.INTER_AREA)
+
                 cv2.imwrite(file_path, plate_img)
                 number_plates = plate_extraction(plate_img)
+
+                if not number_plates:
+                    number_plates = bright_plate_extraction(plate_img)
+
                 if number_plates == "":
                     continue
 
@@ -208,6 +209,7 @@ def parking(req):
             "parking": serializer.data,
             "page": paginated_data.number,
             "total_pages": paginator.num_pages,
+            "isAdmin": req.user.is_superuser
         }
         return HttpResponse(template.render(context, req)) 
 
@@ -258,6 +260,7 @@ def users(req):
             "users": serializer.data,
             "page": paginated_users.number,
             "total_pages": paginator.num_pages,
+            "isAdmin": req.user.is_superuser
         }
         return HttpResponse(template.render(context, req))
 
@@ -304,6 +307,7 @@ def slots(req):
             "slots": serializer.data,
             "page": paginated_slots.number,
             "total_pages": paginator.num_pages,
+            "isAdmin": req.user.is_superuser
         }
         return HttpResponse(template.render(context, req))
 

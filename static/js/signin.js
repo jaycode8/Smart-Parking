@@ -2,6 +2,18 @@ const form = document.querySelector('form');
 const messageBox = document.querySelector('#alert-message');
 const messageSpan = document.querySelector('#message-span');
 
+function showToast(message, clr) {
+    Toastify({
+        text: message,
+        duration: 5000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        backgroundColor: clr,
+        stopOnFocus: true,
+    }).showToast();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', function (event) {
@@ -19,23 +31,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         })
             .then(response => {
-                console.log(response.data)
-                messageSpan.textContent = response.data.message;
-                messageBox.classList.add('flex');
-                messageBox.classList.remove('hidden');
                 if(response.data.success){
-                    messageBox.classList.add('bg-green-800');
+                    showToast(response.data.message, "#22c55e")
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1500);
                     return
                 }
-                messageBox.classList.add('bg-red-500');
             })
             .catch(error => {
-                console.error('Error creating user:', error);
-                messageSpan.textContent = 'Error creating user. Please try again.';
-                messageSpan.classList.add('bg-red-500');
+                showToast("Wrong username or password", "red")
             });
     });
 });
